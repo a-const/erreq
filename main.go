@@ -33,13 +33,11 @@ var (
 	finalityCheckpoints = vanila.SpawnGetRequest("finality_checkpoints")
 	validatorByID       = vanila.SpawnGetRequest("validator_by_id")
 	blockByID           = vanila.SpawnGetRequest("block_by_id")
+
+	ctr = propcounter.NewCounter()
 )
 
 func main() {
-	// Screen refresher
-	writer := uilive.New()
-	writer.Start()
-
 	// Spinner
 	var wg sync.WaitGroup
 	s := chin.New().WithWait(&wg)
@@ -58,8 +56,9 @@ func main() {
 	}
 	appFlags = append(appFlags, delayFlag)
 
-	action := func(ctx *cli.Context, wr *uilive.Writer, obj service.Get, params ...string) error {
-
+	action := func(ctx *cli.Context, obj service.Get, params ...string) error {
+		writer := uilive.New()
+		writer.Start()
 		delay := ctx.Int64(delayFlag.Name)
 		if delay > 0 {
 			ticker := time.NewTicker(time.Second * time.Duration(delay))
@@ -69,7 +68,7 @@ func main() {
 				if err != nil {
 					log.Errorf("can't indent json data! err: %s", err)
 				}
-				fmt.Fprintf(wr, "\n%s\nDelay = %ds. Working...", indented, delay)
+				fmt.Fprintf(writer, "\n%s\nDelay = %ds. Working...", indented, delay)
 				<-ticker.C
 			}
 		}
@@ -80,6 +79,7 @@ func main() {
 			log.Errorf("can't indent json data! err: %s", err)
 		}
 		fmt.Printf("%s", indented)
+		writer.Stop()
 		return nil
 	}
 
@@ -103,9 +103,9 @@ func main() {
 		Flags: peerFlags,
 		Action: func(ctx *cli.Context) error {
 			if len(ctx.String("id")) > 0 {
-				return action(ctx, writer, peerbyID, ctx.String("id"))
+				return action(ctx, peerbyID, ctx.String("id"))
 			}
-			return action(ctx, writer, peers)
+			return action(ctx, peers)
 		},
 	}
 
@@ -116,7 +116,7 @@ func main() {
 	syncCommand := &cli.Command{
 		Name: "syncing",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, syncing)
+			return action(ctx, syncing)
 		},
 	}
 
@@ -127,7 +127,7 @@ func main() {
 	identityCommand := &cli.Command{
 		Name: "identity",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, identity)
+			return action(ctx, identity)
 		},
 	}
 
@@ -138,7 +138,7 @@ func main() {
 	peerCountCommand := &cli.Command{
 		Name: "peer_count",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, peerCount)
+			return action(ctx, peerCount)
 		},
 	}
 
@@ -149,7 +149,7 @@ func main() {
 	versionCommand := &cli.Command{
 		Name: "peer_count",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, version)
+			return action(ctx, version)
 		},
 	}
 
@@ -164,7 +164,7 @@ func main() {
 	genesisCommand := &cli.Command{
 		Name: "genesis",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, genesis)
+			return action(ctx, genesis)
 		},
 	}
 
@@ -189,9 +189,9 @@ func main() {
 		Flags: append(stateFlags, validatorIDFlag),
 		Action: func(ctx *cli.Context) error {
 			if len(ctx.String("v")) > 0 {
-				return action(ctx, writer, validatorByID, ctx.String("id"), "validators", ctx.String("v"))
+				return action(ctx, validatorByID, ctx.String("id"), "validators", ctx.String("v"))
 			}
-			return action(ctx, writer, validators, ctx.String("id"), "validators")
+			return action(ctx, validators, ctx.String("id"), "validators")
 		},
 	}
 
@@ -203,7 +203,7 @@ func main() {
 		Name:  "root",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, root, ctx.String("id"), "root")
+			return action(ctx, root, ctx.String("id"), "root")
 		},
 	}
 
@@ -215,7 +215,7 @@ func main() {
 		Name:  "fork",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, fork, ctx.String("id"), "fork")
+			return action(ctx, fork, ctx.String("id"), "fork")
 		},
 	}
 
@@ -227,7 +227,7 @@ func main() {
 		Name:  "finality_checkpoints",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, finalityCheckpoints, ctx.String("id"), "finality_checkpoints")
+			return action(ctx, finalityCheckpoints, ctx.String("id"), "finality_checkpoints")
 		},
 	}
 
@@ -248,34 +248,27 @@ func main() {
 		Name:  "block",
 		Flags: blockFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, writer, blockByID, ctx.String("id"))
+			return action(ctx, blockByID, ctx.String("id"))
 
 		},
 	}
 
 	proposerCountFlags := make([]cli.Flag, 0, 1)
-	validatorFlag := &cli.Int64Flag{
-		Name:  "v",
-		Usage: "Index of target validator",
-	}
-	fromFlag := &cli.Int64Flag{
-		Name:  "from",
-		Usage: "slot from which app will count",
+	fromFlag := &cli.StringFlag{
+		Name:     "from",
+		Usage:    "slot from which app will count",
+		Required: true,
 	}
 	toFlag := &cli.StringFlag{
-		Name:  "to",
-		Usage: "last slot for counter",
-	}
-	stateFlag := &cli.StringFlag{
-		Name:     "s",
-		Usage:    "state index",
+		Name:     "to",
+		Usage:    "last slot for counter",
 		Required: true,
 	}
 	filenameFlag := &cli.StringFlag{
-		Name:  "f",
+		Name:  "filename",
 		Usage: "name for output file",
 	}
-	proposerCountFlags = append(proposerCountFlags, validatorFlag, stateFlag, filenameFlag, fromFlag, toFlag)
+	proposerCountFlags = append(proposerCountFlags, filenameFlag, fromFlag, toFlag)
 
 	ctr := propcounter.NewCounter()
 
@@ -283,7 +276,7 @@ func main() {
 		Name:  "prop-count",
 		Flags: proposerCountFlags,
 		Action: func(ctx *cli.Context) error {
-			ctr.Count(ctx.String("s"), ctx.Int64("v"), ctx.String("f"), ctx.String("from"), ctx.String("to"))
+			ctr.Count(ctx.String("from"), ctx.String("to"), ctx.String("filename"))
 			return nil
 		},
 	}

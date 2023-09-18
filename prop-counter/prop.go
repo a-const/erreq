@@ -2,91 +2,119 @@ package propcounter
 
 import (
 	"brreq/service"
-	"brreq/vanila"
-	"brreq/vanila/getrequests"
+	"brreq/vanilla/getrequests"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 
+	"golang.org/x/exp/slices"
+
 	log "github.com/sirupsen/logrus"
-)
-
-type ProposersJSON struct {
-	MaxProposed int             `json:"max_proposed"`
-	Proposers   []*ProposerJSON `json:"proposers"`
-}
-
-type ProposerJSON struct {
-	Index   int `json:"index"`
-	Counter int `json:"counter"`
-}
-
-type Counter struct {
-	ActivationEpoch int
-	Ctr             map[int]int
-}
-
-var (
-	getValidator  = vanila.SpawnGetRequest("validator_by_id")
-	getValidators = vanila.SpawnGetRequest("validators")
-	getBlockByID  = vanila.SpawnGetRequest("block_by_id")
 )
 
 func NewCounter() *Counter {
 	return &Counter{}
 }
 
-func (c *Counter) prepare(stateID string, proposerIndex int64) {
-	rsp := getValidators.Request([]string{stateID, "validators"})
-	c.Ctr = make(map[int]int, len(rsp.(*getrequests.ValidatorsJSON).Data))
-	rsp = getValidator.Request([]string{stateID, "validators", fmt.Sprintf("%d", proposerIndex)})
-	ae, err := strconv.Atoi(rsp.(*getrequests.ValidatorByIDJSON).Data.Validator.ActivationEpoch)
+func mustAtoi(val string) int {
+	res, err := strconv.Atoi(val)
 	if err != nil {
-		log.Fatalf("can't convert activationEpoch to int! err: %s", err)
+		log.Fatal("can't convert string to int!")
 	}
-	c.ActivationEpoch = ae
+	return res
+}
+func mustParseUInt64(val string) uint64 {
+	res, err := strconv.ParseUint(val, 10, 64)
+	if err != nil {
+		log.Fatal("can't convert string to int!")
+	}
+	return res
 }
 
-func (c *Counter) Count(stateID string, proposerIndex int64, filename string, from int64, to string) {
-	c.prepare(stateID, proposerIndex)
-	headBlock := getBlockByID.Request([]string{stateID})
-	headIndex, err := strconv.Atoi(headBlock.(*getrequests.BlockByIDJSON).Data.Message.Slot)
-	if err != nil {
-		log.Fatalf("can't convert validatorindex to int! err: %s", err)
-	}
-	log.Infof("Head index = %d Activation epoch = %d", headIndex, c.ActivationEpoch)
+func (c *Counter) getAllProposersNum() int {
+	resp := getValidators.Request([]string{"head", "validators"})
+	return len(resp.(*getrequests.ValidatorsJSON).Data)
+}
 
-	for i := c.ActivationEpoch * 32; i <= headIndex; i++ {
+func (c *Counter) getActivitiesContractsEarnings() {
+	resp := getValidators.Request([]string{"head", "validators"})
+	for i := 0; i < len(resp.(*getrequests.ValidatorsJSON).Data); i++ {
+		if resp.(*getrequests.ValidatorsJSON).Data[i].Validator.Contract != emptyContract {
+			c.Output.Proposers[i].Contract = resp.(*getrequests.ValidatorsJSON).Data[i].Validator.Contract
+		}
+		actv := mustParseUInt64(resp.(*getrequests.ValidatorsJSON).Data[i].Validator.EffectiveActivity)
+
+		c.Output.Proposers[i].Activity = actv
+		balance := mustParseUInt64(resp.(*getrequests.ValidatorsJSON).Data[i].Balance)
+
+		c.Output.Proposers[i].Earned = balance % uint64(8192*1e9)
+
+		log.Infof("Writing contracts, activities and earnings...%d / %d", i, len(c.Output.Proposers))
+	}
+}
+
+func (c *Counter) Count(from string, to string, filename string) {
+	//writter.Start()
+	var (
+		toIndex   int
+		fromIndex int
+	)
+	if to == "head" {
+		headBlock := getBlockByID.Request([]string{to})
+		toIndex = mustAtoi(headBlock.(*getrequests.BlockByIDJSON).Data.Message.Slot)
+	} else {
+		toIndex = mustAtoi(to)
+	}
+	fromIndex = mustAtoi(from)
+
+	c.Output = &ProposersJSON{
+		MaxProposed: -1,
+		From:        fromIndex,
+		To:          toIndex,
+		Proposers:   make([]*ProposerJSON, c.getAllProposersNum()),
+	}
+
+	for i := 0; i < len(c.Output.Proposers); i++ {
+		c.Output.Proposers[i] = &ProposerJSON{
+			Index: i,
+		}
+	}
+
+	log.Infof("cap of proposers: %d", cap(c.Output.Proposers))
+	for i := fromIndex; i <= toIndex; i++ {
 		block := getBlockByID.Request([]string{fmt.Sprintf("%d", i)})
 		switch t := block.(type) {
 		case *getrequests.BlockByIDJSON:
-			ind, err := strconv.Atoi(t.Data.Message.ProposerIndex)
-			if err != nil {
-				log.Fatal("Can't conver proposer index to int!")
+			ind := mustAtoi(t.Data.Message.ProposerIndex)
+			c.Output.Proposers[ind].Index = ind
+			c.Output.Proposers[ind].Counter += 1
+			if c.Output.MaxProposed < c.Output.Proposers[ind].Counter {
+				c.Output.MaxProposed = c.Output.Proposers[ind].Counter
 			}
-			log.Infof("Block: %d.  Proposer index %d.", i, ind)
-			c.Ctr[ind] += 1
+			log.Infof("From: %d. To: %d. Current block: %d.  Proposer index %d.", fromIndex, toIndex, i, ind)
 		case *service.ErrorHandler:
 			continue
 		}
 	}
 
-	output := &ProposersJSON{
-		MaxProposed: -1,
-		Proposers:   make([]*ProposerJSON, 0, len(c.Ctr)),
-	}
-	for i, value := range c.Ctr {
-		if output.MaxProposed < value {
-			output.MaxProposed = value
+	c.getActivitiesContractsEarnings()
+
+	slices.SortStableFunc(c.Output.Proposers, func(a, b *ProposerJSON) int {
+		if a.Counter > b.Counter {
+			return -1
 		}
-		p := &ProposerJSON{
-			Counter: value,
-			Index:   i,
+		if a.Counter < b.Counter {
+			return 1
 		}
-		output.Proposers = append(output.Proposers, p)
-	}
-	jsonByte, err := json.Marshal(output)
+		return 0
+	})
+	//writter.Stop()
+	c.toFile(filename)
+}
+
+func (c *Counter) toFile(filename string) {
+	jsonByte, err := json.MarshalIndent(c.Output, " ", "   ")
 	if err != nil {
 		log.Fatalf("can't marshal results to json! %s", err)
 	}
