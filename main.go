@@ -1,8 +1,9 @@
 package main
 
 import (
-	factory "brreq/factory"
+	propcounter "brreq/prop-counter"
 	"brreq/service"
+	vanila "brreq/vanila"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,21 +18,21 @@ import (
 
 var (
 	//Node
-	peers     = factory.SpawnGetRequest("peers")
-	peerbyID  = factory.SpawnGetRequest("peerbyid")
-	syncing   = factory.SpawnGetRequest("syncing")
-	identity  = factory.SpawnGetRequest("identity")
-	peerCount = factory.SpawnGetRequest("peer_count")
-	version   = factory.SpawnGetRequest("version")
+	peers     = vanila.SpawnGetRequest("peers")
+	peerbyID  = vanila.SpawnGetRequest("peerbyid")
+	syncing   = vanila.SpawnGetRequest("syncing")
+	identity  = vanila.SpawnGetRequest("identity")
+	peerCount = vanila.SpawnGetRequest("peer_count")
+	version   = vanila.SpawnGetRequest("version")
 
 	//Beacon
-	genesis             = factory.SpawnGetRequest("genesis")
-	validators          = factory.SpawnGetRequest("validators")
-	root                = factory.SpawnGetRequest("root")
-	fork                = factory.SpawnGetRequest("fork")
-	finalityCheckpoints = factory.SpawnGetRequest("finality_checkpoints")
-	validatorByID       = factory.SpawnGetRequest("validator_by_id")
-	blockByID           = factory.SpawnGetRequest("block_by_id")
+	genesis             = vanila.SpawnGetRequest("genesis")
+	validators          = vanila.SpawnGetRequest("validators")
+	root                = vanila.SpawnGetRequest("root")
+	fork                = vanila.SpawnGetRequest("fork")
+	finalityCheckpoints = vanila.SpawnGetRequest("finality_checkpoints")
+	validatorByID       = vanila.SpawnGetRequest("validator_by_id")
+	blockByID           = vanila.SpawnGetRequest("block_by_id")
 )
 
 func main() {
@@ -252,6 +253,41 @@ func main() {
 		},
 	}
 
+	proposerCountFlags := make([]cli.Flag, 0, 1)
+	validatorFlag := &cli.Int64Flag{
+		Name:  "v",
+		Usage: "Index of target validator",
+	}
+	fromFlag := &cli.Int64Flag{
+		Name:  "from",
+		Usage: "slot from which app will count",
+	}
+	toFlag := &cli.StringFlag{
+		Name:  "to",
+		Usage: "last slot for counter",
+	}
+	stateFlag := &cli.StringFlag{
+		Name:     "s",
+		Usage:    "state index",
+		Required: true,
+	}
+	filenameFlag := &cli.StringFlag{
+		Name:  "f",
+		Usage: "name for output file",
+	}
+	proposerCountFlags = append(proposerCountFlags, validatorFlag, stateFlag, filenameFlag, fromFlag, toFlag)
+
+	ctr := propcounter.NewCounter()
+
+	proposerCountCommand := &cli.Command{
+		Name:  "prop-count",
+		Flags: proposerCountFlags,
+		Action: func(ctx *cli.Context) error {
+			ctr.Count(ctx.String("s"), ctx.Int64("v"), ctx.String("f"), ctx.String("from"), ctx.String("to"))
+			return nil
+		},
+	}
+
 	app.Commands = []*cli.Command{
 		//Node
 		peerCommand,
@@ -266,6 +302,8 @@ func main() {
 		forkCommand,
 		finalityCheckpointsCommand,
 		blockCommand,
+		// Counter
+		proposerCountCommand,
 	}
 	app.Flags = appFlags
 
