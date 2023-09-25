@@ -3,7 +3,7 @@ package main
 import (
 	propcounter "brreq/prop-counter"
 	"brreq/service"
-	vanila "brreq/vanila"
+	vanila "brreq/vanilla"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -295,7 +295,7 @@ func main() {
 		forkCommand,
 		finalityCheckpointsCommand,
 		blockCommand,
-		// Counter
+		// Analyse
 		proposerCountCommand,
 	}
 	app.Flags = appFlags

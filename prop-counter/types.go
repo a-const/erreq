@@ -2,6 +2,8 @@ package propcounter
 
 import (
 	"brreq/vanilla"
+
+	"github.com/gosuri/uilive"
 )
 
 type ProposersJSON struct {
@@ -22,12 +24,13 @@ type ProposerJSON struct {
 type Counter struct {
 	Output *ProposersJSON
 	Ctr    map[int]int
+	Check  chan bool
 }
 
 var (
 	getBlockByID  = vanilla.SpawnGetRequest("block_by_id")
 	getValidators = vanilla.SpawnGetRequest("validators")
 	//getValidatorByID = vanila.SpawnGetRequest("validator_by_id")
-	//writter          = uilive.New()
+	writter       = uilive.New()
 	emptyContract = "0x0000000000000000000000000000000000000000"
 )

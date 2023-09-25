@@ -32,6 +32,10 @@ func mustParseUInt64(val string) uint64 {
 	return res
 }
 
+// func (c *Counter) log(){
+
+// }
+
 func (c *Counter) getAllProposersNum() int {
 	resp := getValidators.Request([]string{"head", "validators"})
 	return len(resp.(*getrequests.ValidatorsJSON).Data)
@@ -49,13 +53,22 @@ func (c *Counter) getActivitiesContractsEarnings() {
 		balance := mustParseUInt64(resp.(*getrequests.ValidatorsJSON).Data[i].Balance)
 
 		c.Output.Proposers[i].Earned = balance % uint64(8192*1e9)
+		// go func() {
+		// 	ticker := time.NewTicker(time.Second * time.Duration(1))
+		// 	for {
+		// 		fmt.Fprintf(writter, "\n[Adding other info] Contracts, activities and earnings...%d out of %d validator", i, len(c.Output.Proposers))
+		// 		<-ticker.C
+		// 	}
+		// }()
 
-		log.Infof("Writing contracts, activities and earnings...%d / %d", i, len(c.Output.Proposers))
+		//log.Infof("Writing contracts, activities and earnings...%d / %d", i, len(c.Output.Proposers))
+		writter.Start()
+		fmt.Fprintf(writter, "\n[Adding other info] Contracts, activities and earnings...%d out of %d validator   ", i, len(c.Output.Proposers))
+		writter.Stop()
 	}
 }
 
 func (c *Counter) Count(from string, to string, filename string) {
-	//writter.Start()
 	var (
 		toIndex   int
 		fromIndex int
@@ -81,7 +94,7 @@ func (c *Counter) Count(from string, to string, filename string) {
 		}
 	}
 
-	log.Infof("cap of proposers: %d", cap(c.Output.Proposers))
+	//ticker := time.NewTicker(time.Second * time.Duration(1))
 	for i := fromIndex; i <= toIndex; i++ {
 		block := getBlockByID.Request([]string{fmt.Sprintf("%d", i)})
 		switch t := block.(type) {
@@ -92,7 +105,13 @@ func (c *Counter) Count(from string, to string, filename string) {
 			if c.Output.MaxProposed < c.Output.Proposers[ind].Counter {
 				c.Output.MaxProposed = c.Output.Proposers[ind].Counter
 			}
-			log.Infof("From: %d. To: %d. Current block: %d.  Proposer index %d.", fromIndex, toIndex, i, ind)
+
+			//if (<-ticker.C) {
+			writter.Start()
+			fmt.Fprintf(writter, "\n[Counting blocks] From: %d. To: %d. Current block: %d.  Proposer index %d.   ", fromIndex, toIndex, i, ind)
+			writter.Stop()
+			//}
+			//log.Infof("From: %d. To: %d. Current block: %d.  Proposer index %d.", fromIndex, toIndex, i, ind)
 		case *service.ErrorHandler:
 			continue
 		}
@@ -109,7 +128,6 @@ func (c *Counter) Count(from string, to string, filename string) {
 		}
 		return 0
 	})
-	//writter.Stop()
 	c.toFile(filename)
 }
 
@@ -132,5 +150,5 @@ func (c *Counter) toFile(filename string) {
 		log.Fatalf("Data hasn't been written! err: %s", err)
 	}
 
-	fmt.Printf("Done. Results in file: %s", fn)
+	fmt.Printf("\nDone. Results in file: %s\n", fn)
 }
