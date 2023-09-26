@@ -1,15 +1,15 @@
-# brreq (beacon-chain rpc requester)
+# erreq (eth rpc requester)
 
-Little tool to make requests to Prysm gRPC easier
+Little tool to make requests to Prysm and Geth gRPC easier
 
-ver 0.2
+ver 0.3
 
 ---
 
 Usage:
 
 ```
-./brreq [-d] [command] [-key] ...
+./erreq [-d] [command] [-key] ...
 ```
 
 ### Global keys
@@ -29,22 +29,22 @@ Usage:
 
 ##### Beacon
 
-* genesis  
-* validators  
-  *-id*     state id (required)  
-  *-v*      validator index  
+* genesis
+* validators
+  *-s*     state id (required)
+  *-v*      validator index
 * root
-  *-id*     state id (required)  
-* fork  
-  *-id*     state id (required)  
-* finality_checkpoints  
-  *-id*     state id (required)  
-* block  
-  *-id*     block id (required)  
+  *-s*     state id (required)
+* fork
+  *-s*     state id (required)
+* finality_checkpoints
+  *-s*     state id (required)
+* block
+  *-id*     block id (required)
 
 ##### Analyse
 
-* prop-count  
-  *-from*     begin slot number (required)  
-  *-to*       end slot number (or just "head") (required)  
-  *-filename*     name for output file (default - "proposers.json" to same dir as bin location)  
+* prop-count
+  *-f*     begin slot number (required)
+  *-t*       end slot number (or just "head") (required)
+  *-filename*     name for output file (default - "proposers.json" to same dir as bin location)
