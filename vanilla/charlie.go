@@ -2,37 +2,46 @@ package vanilla
 
 import (
 	"brreq/service"
-	get "brreq/vanilla/getrequests"
+	gethPost "brreq/vanilla/geth/postrequests"
+	prysmGet "brreq/vanilla/prysm/getrequests"
 )
 
 func SpawnGetRequest(endpoint string) service.Get {
 	switch endpoint {
-	case "peers":
-		return get.SpawnPeers()
-	case "syncing":
-		return get.SpawnSyncing()
-	case "identity":
-		return get.SpawnIdentity()
-	case "peer_count":
-		return get.SpawnPeerCount()
-	case "version":
-		return get.SpawnVersion()
-	case "peerbyid":
-		return get.SpawnPeerByID()
-	case "genesis":
-		return get.SpawnGenesis()
-	case "validators":
-		return get.SpawnValidators()
-	case "root":
-		return get.SpawnRoot()
-	case "fork":
-		return get.SpawnFork()
-	case "finality_checkpoints":
-		return get.SpawnFinalityCheckpoints()
-	case "validator_by_id":
-		return get.SpawnValidatorByID()
-	case "block_by_id":
-		return get.SpawnBlockByID()
+	case "prysm_peers":
+		return prysmGet.SpawnPeers()
+	case "prysm_syncing":
+		return prysmGet.SpawnSyncing()
+	case "prysm_identity":
+		return prysmGet.SpawnIdentity()
+	case "prysm_peer_count":
+		return prysmGet.SpawnPeerCount()
+	case "prysm_version":
+		return prysmGet.SpawnVersion()
+	case "prysm_peerbyid":
+		return prysmGet.SpawnPeerByID()
+	case "prysm_genesis":
+		return prysmGet.SpawnGenesis()
+	case "prysm_validators":
+		return prysmGet.SpawnValidators()
+	case "prysm_root":
+		return prysmGet.SpawnRoot()
+	case "prysm_fork":
+		return prysmGet.SpawnFork()
+	case "prysm_finality_checkpoints":
+		return prysmGet.SpawnFinalityCheckpoints()
+	case "prysm_validator_by_id":
+		return prysmGet.SpawnValidatorByID()
+	case "prysm_block_by_id":
+		return prysmGet.SpawnBlockByID()
+	}
+	return nil
+}
+
+func SpawnPostRequest(endpoint string) service.Post {
+	switch endpoint {
+	case "geth_block_by_number":
+		return gethPost.SpawnBlockByNumer()
 	}
 	return nil
 }

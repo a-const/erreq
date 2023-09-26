@@ -2,6 +2,7 @@ package propcounter
 
 import (
 	"brreq/vanilla"
+	"math/big"
 
 	"github.com/gosuri/uilive"
 )
@@ -10,6 +11,8 @@ type ProposersJSON struct {
 	From        int             `json:"from"`
 	To          int             `json:"to"`
 	MaxProposed int             `json:"max_proposed"`
+	Burned      *big.Int        `json:"burned"`
+	Minted      *big.Int        `json:"minted"`
 	Proposers   []*ProposerJSON `json:"proposers"`
 }
 
@@ -28,9 +31,9 @@ type Counter struct {
 }
 
 var (
-	getBlockByID  = vanilla.SpawnGetRequest("block_by_id")
-	getValidators = vanilla.SpawnGetRequest("validators")
-	//getValidatorByID = vanila.SpawnGetRequest("validator_by_id")
+	getBlockByID  = vanilla.SpawnGetRequest("prysm_block_by_id")
+	getValidators = vanilla.SpawnGetRequest("prysm_validators")
+	getGethBlock  = vanilla.SpawnPostRequest("geth_block_by_number")
 	writter       = uilive.New()
 	emptyContract = "0x0000000000000000000000000000000000000000"
 )

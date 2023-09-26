@@ -5,5 +5,5 @@ type Get interface {
 }
 
 type Post interface {
-	Request(body string)
+	Request(body any) any
 }

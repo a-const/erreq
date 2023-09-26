@@ -3,7 +3,7 @@ package main
 import (
 	propcounter "brreq/prop-counter"
 	"brreq/service"
-	vanila "brreq/vanilla"
+	vanilla "brreq/vanilla"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -18,23 +18,27 @@ import (
 
 var (
 	//Node
-	peers     = vanila.SpawnGetRequest("peers")
-	peerbyID  = vanila.SpawnGetRequest("peerbyid")
-	syncing   = vanila.SpawnGetRequest("syncing")
-	identity  = vanila.SpawnGetRequest("identity")
-	peerCount = vanila.SpawnGetRequest("peer_count")
-	version   = vanila.SpawnGetRequest("version")
+	peers     = vanilla.SpawnGetRequest("prysm_peers")
+	peerbyID  = vanilla.SpawnGetRequest("prysm_peerbyid")
+	syncing   = vanilla.SpawnGetRequest("prysm_syncing")
+	identity  = vanilla.SpawnGetRequest("prysm_identity")
+	peerCount = vanilla.SpawnGetRequest("prysm_peer_count")
+	version   = vanilla.SpawnGetRequest("prysm_version")
 
 	//Beacon
-	genesis             = vanila.SpawnGetRequest("genesis")
-	validators          = vanila.SpawnGetRequest("validators")
-	root                = vanila.SpawnGetRequest("root")
-	fork                = vanila.SpawnGetRequest("fork")
-	finalityCheckpoints = vanila.SpawnGetRequest("finality_checkpoints")
-	validatorByID       = vanila.SpawnGetRequest("validator_by_id")
-	blockByID           = vanila.SpawnGetRequest("block_by_id")
+	genesis             = vanilla.SpawnGetRequest("prysm_genesis")
+	validators          = vanilla.SpawnGetRequest("prysm_validators")
+	root                = vanilla.SpawnGetRequest("prysm_root")
+	fork                = vanilla.SpawnGetRequest("prysm_fork")
+	finalityCheckpoints = vanilla.SpawnGetRequest("prysm_finality_checkpoints")
+	validatorByID       = vanilla.SpawnGetRequest("prysm_validator_by_id")
+	blockByID           = vanilla.SpawnGetRequest("prysm_block_by_id")
 
+	// Analyze
 	ctr = propcounter.NewCounter()
+
+	// Geth
+	bbn = vanilla.SpawnPostRequest("geth_block_by_number")
 )
 
 func main() {
@@ -54,9 +58,10 @@ func main() {
 		Value: 0,
 		Usage: "delay for refresh",
 	}
+
 	appFlags = append(appFlags, delayFlag)
 
-	action := func(ctx *cli.Context, obj service.Get, params ...string) error {
+	vanillaAction := func(ctx *cli.Context, obj service.Get, params ...string) error {
 		writer := uilive.New()
 		writer.Start()
 		delay := ctx.Int64(delayFlag.Name)
@@ -84,7 +89,7 @@ func main() {
 	}
 
 	//////////////////////////////
-	//			Node			//
+	//	     (vanilla) Node		//
 	//////////////////////////////
 
 	//
@@ -102,10 +107,10 @@ func main() {
 		Name:  "peers",
 		Flags: peerFlags,
 		Action: func(ctx *cli.Context) error {
-			if len(ctx.String("id")) > 0 {
-				return action(ctx, peerbyID, ctx.String("id"))
+			if len(ctx.String(peerByIDFlag.Name)) > 0 {
+				return vanillaAction(ctx, peerbyID, ctx.String(peerByIDFlag.Name))
 			}
-			return action(ctx, peers)
+			return vanillaAction(ctx, peers)
 		},
 	}
 
@@ -116,7 +121,7 @@ func main() {
 	syncCommand := &cli.Command{
 		Name: "syncing",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, syncing)
+			return vanillaAction(ctx, syncing)
 		},
 	}
 
@@ -127,7 +132,7 @@ func main() {
 	identityCommand := &cli.Command{
 		Name: "identity",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, identity)
+			return vanillaAction(ctx, identity)
 		},
 	}
 
@@ -138,7 +143,7 @@ func main() {
 	peerCountCommand := &cli.Command{
 		Name: "peer_count",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, peerCount)
+			return vanillaAction(ctx, peerCount)
 		},
 	}
 
@@ -149,12 +154,12 @@ func main() {
 	versionCommand := &cli.Command{
 		Name: "peer_count",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, version)
+			return vanillaAction(ctx, version)
 		},
 	}
 
 	//////////////////////////////
-	//			Beacon			//
+	//	   (vanilla) Beacon		//
 	//////////////////////////////
 
 	//
@@ -164,7 +169,7 @@ func main() {
 	genesisCommand := &cli.Command{
 		Name: "genesis",
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, genesis)
+			return vanillaAction(ctx, genesis)
 		},
 	}
 
@@ -174,7 +179,7 @@ func main() {
 
 	stateFlags := make([]cli.Flag, 0, 1)
 	stateIDFlag := &cli.StringFlag{
-		Name:     "id",
+		Name:     "s",
 		Usage:    "state ID",
 		Required: true,
 	}
@@ -189,9 +194,9 @@ func main() {
 		Flags: append(stateFlags, validatorIDFlag),
 		Action: func(ctx *cli.Context) error {
 			if len(ctx.String("v")) > 0 {
-				return action(ctx, validatorByID, ctx.String("id"), "validators", ctx.String("v"))
+				return vanillaAction(ctx, validatorByID, ctx.String(stateIDFlag.Name), "validators", ctx.String(validatorIDFlag.Name))
 			}
-			return action(ctx, validators, ctx.String("id"), "validators")
+			return vanillaAction(ctx, validators, ctx.String("s"), "validators")
 		},
 	}
 
@@ -203,7 +208,7 @@ func main() {
 		Name:  "root",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, root, ctx.String("id"), "root")
+			return vanillaAction(ctx, root, ctx.String(stateIDFlag.Name), "root")
 		},
 	}
 
@@ -215,7 +220,7 @@ func main() {
 		Name:  "fork",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, fork, ctx.String("id"), "fork")
+			return vanillaAction(ctx, fork, ctx.String(stateIDFlag.Name), "fork")
 		},
 	}
 
@@ -227,7 +232,7 @@ func main() {
 		Name:  "finality_checkpoints",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, finalityCheckpoints, ctx.String("id"), "finality_checkpoints")
+			return vanillaAction(ctx, finalityCheckpoints, ctx.String(stateIDFlag.Name), "finality_checkpoints")
 		},
 	}
 
@@ -248,19 +253,27 @@ func main() {
 		Name:  "block",
 		Flags: blockFlags,
 		Action: func(ctx *cli.Context) error {
-			return action(ctx, blockByID, ctx.String("id"))
+			return vanillaAction(ctx, blockByID, ctx.String(blockIDFlag.Name))
 
 		},
 	}
 
+	//////////////////////////////
+	//	 		Analyze		    //
+	//////////////////////////////
+
+	//
+	// Prop count
+	//
+
 	proposerCountFlags := make([]cli.Flag, 0, 1)
 	fromFlag := &cli.StringFlag{
-		Name:     "from",
+		Name:     "f",
 		Usage:    "slot from which app will count",
 		Required: true,
 	}
 	toFlag := &cli.StringFlag{
-		Name:     "to",
+		Name:     "t",
 		Usage:    "last slot for counter",
 		Required: true,
 	}
@@ -270,13 +283,48 @@ func main() {
 	}
 	proposerCountFlags = append(proposerCountFlags, filenameFlag, fromFlag, toFlag)
 
-	ctr := propcounter.NewCounter()
-
 	proposerCountCommand := &cli.Command{
-		Name:  "prop-count",
-		Flags: proposerCountFlags,
+		Name:        "prop-count",
+		Description: "Retrieves proposed blocks and other info for every validator",
+		Flags:       proposerCountFlags,
 		Action: func(ctx *cli.Context) error {
-			ctr.Count(ctx.String("from"), ctx.String("to"), ctx.String("filename"))
+			ctr.Count(ctx.String(fromFlag.Name), ctx.String(toFlag.Name), ctx.String(filenameFlag.Name))
+			return nil
+		},
+	}
+
+	//////////////////////////////
+	//	 		Geth		    //
+	//////////////////////////////
+
+	//
+	// Block by number
+	//
+
+	blockByNumberFlags := make([]cli.Flag, 0, 1)
+	numberFlag := &cli.Int64Flag{
+		Name:  "n",
+		Usage: "block to retreive",
+	}
+	blockByNumberFlags = append(blockByNumberFlags, numberFlag)
+
+	bbnCommand := &cli.Command{
+		Name:        "geth-block",
+		Description: "Geth geth block by its number",
+		Flags:       blockByNumberFlags,
+		Action: func(ctx *cli.Context) error {
+			hexed := fmt.Sprintf("0x%x", ctx.Int64(numberFlag.Name))
+			rsp := bbn.Request(map[string]any{
+				"jsonrpc": "2.0",
+				"id":      1,
+				"method":  "eth_getBlockByNumber",
+				"params":  []any{hexed, false},
+			})
+			indented, err := json.MarshalIndent(rsp, " ", "    ")
+			if err != nil {
+				log.Errorf("can't indent json data! err: %s", err)
+			}
+			fmt.Printf("%s", indented)
 			return nil
 		},
 	}
@@ -297,6 +345,8 @@ func main() {
 		blockCommand,
 		// Analyse
 		proposerCountCommand,
+		// Geth
+		bbnCommand,
 	}
 	app.Flags = appFlags
 

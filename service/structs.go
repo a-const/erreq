@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -51,6 +52,26 @@ type PostRequest struct {
 	Response any
 }
 
-func (gr *PostRequest) Request() any {
-	return gr.Response
+func (pr *PostRequest) Request(body any) any {
+	marshaledBody, err := json.Marshal(body)
+	if err != nil {
+		log.Fatalf("body encoding error! err: %s", err)
+	}
+	response, err := http.Post(pr.Url, "application/json", bytes.NewBuffer(marshaledBody))
+	if err != nil {
+		log.Fatalf("request sending error! err: %s", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode == http.StatusOK {
+		err = json.NewDecoder(response.Body).Decode(pr.Response)
+		if err != nil {
+			log.Fatalf("response decoding error! err: %s", err)
+		}
+		return pr.Response
+	}
+
+	return &ErrorHandler{
+		Code:    response.StatusCode,
+		Message: "Error",
+	}
 }
