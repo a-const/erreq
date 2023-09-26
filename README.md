@@ -20,7 +20,7 @@ Usage:
 
 ##### Node
 
-* peers
+* peers   
   *-id*    get peer by id
 * syncing
 * identity
@@ -30,21 +30,21 @@ Usage:
 ##### Beacon
 
 * genesis
-* validators
-  *-s*     state id (required)
+* validators   
+  *-s*     state id (required)   
   *-v*      validator index
-* root
-  *-s*     state id (required)
-* fork
-  *-s*     state id (required)
-* finality_checkpoints
-  *-s*     state id (required)
-* block
+* root   
+  *-s*     state id (required)   
+* fork   
+  *-s*     state id (required)  
+* finality_checkpoints  
+  *-s*     state id (required)  
+* block   
   *-id*     block id (required)
 
 ##### Analyse
 
-* prop-count
-  *-f*     begin slot number (required)
-  *-t*       end slot number (or just "head") (required)
+* prop-count  
+  *-f*     begin slot number (required)  
+  *-t*       end slot number (or just "head") (required)    
   *-filename*     name for output file (default - "proposers.json" to same dir as bin location)
