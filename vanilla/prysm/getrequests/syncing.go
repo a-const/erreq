@@ -21,7 +21,8 @@ type Syncing struct {
 func SpawnSyncing() service.Get {
 	return &Syncing{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/node/syncing",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/node/syncing",
 			Response: &SyncingJSON{},
 		},
 	}

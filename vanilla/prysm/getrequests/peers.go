@@ -30,7 +30,8 @@ type Peers struct {
 func SpawnPeers() service.Get {
 	return &Peers{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/node/peers",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/node/peers",
 			Response: &PeersJSON{},
 		},
 	}
@@ -39,7 +40,8 @@ func SpawnPeers() service.Get {
 func SpawnPeerByID() service.Get {
 	return &Peers{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/node/peers",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/node/peers",
 			Response: &PeerByIDJSON{},
 		},
 	}

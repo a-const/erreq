@@ -57,7 +57,8 @@ type ValidatorByID struct {
 func SpawnValidators() service.Get {
 	return &Validators{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/beacon/states",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/beacon/states",
 			Response: &ValidatorsJSON{},
 		},
 	}
@@ -66,7 +67,8 @@ func SpawnValidators() service.Get {
 func SpawnValidatorByID() service.Get {
 	return &ValidatorByID{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/beacon/states",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/beacon/states",
 			Response: &ValidatorByIDJSON{},
 		},
 	}

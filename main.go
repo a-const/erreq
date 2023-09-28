@@ -58,17 +58,16 @@ func main() {
 		Value: 0,
 		Usage: "delay for refresh",
 	}
-
 	appFlags = append(appFlags, delayFlag)
 
-	vanillaAction := func(ctx *cli.Context, obj service.Get, params ...string) error {
+	vanillaAction := func(ctx *cli.Context, obj service.Get, port string, params ...string) error {
 		writer := uilive.New()
 		writer.Start()
 		delay := ctx.Int64(delayFlag.Name)
 		if delay > 0 {
 			ticker := time.NewTicker(time.Second * time.Duration(delay))
 			for {
-				rsp := obj.Request(params)
+				rsp := obj.Request(params, port)
 				indented, err := json.MarshalIndent(rsp, " ", "   ")
 				if err != nil {
 					log.Errorf("can't indent json data! err: %s", err)
@@ -78,14 +77,27 @@ func main() {
 			}
 		}
 
-		rsp := obj.Request(params)
+		rsp := obj.Request(params, port)
 		indented, err := json.MarshalIndent(rsp, " ", "    ")
 		if err != nil {
 			log.Errorf("can't indent json data! err: %s", err)
 		}
+		writer.Flush()
 		fmt.Printf("%s", indented)
 		writer.Stop()
+
 		return nil
+	}
+
+	beaconPortFlag := &cli.StringFlag{
+		Name:  "p",
+		Value: "3500",
+		Usage: "port for rpc requests",
+	}
+	gethPortFlag := &cli.StringFlag{
+		Name:  "p",
+		Value: "8545",
+		Usage: "port for rpc requests",
 	}
 
 	//////////////////////////////
@@ -101,16 +113,16 @@ func main() {
 		Name:  "id",
 		Usage: "get peer by its ID",
 	}
-	peerFlags = append(peerFlags, peerByIDFlag)
+	peerFlags = append(peerFlags, peerByIDFlag, beaconPortFlag)
 
 	peerCommand := &cli.Command{
 		Name:  "peers",
 		Flags: peerFlags,
 		Action: func(ctx *cli.Context) error {
 			if len(ctx.String(peerByIDFlag.Name)) > 0 {
-				return vanillaAction(ctx, peerbyID, ctx.String(peerByIDFlag.Name))
+				return vanillaAction(ctx, peerbyID, ctx.String("p"), ctx.String(peerByIDFlag.Name))
 			}
-			return vanillaAction(ctx, peers)
+			return vanillaAction(ctx, peers, ctx.String("p"))
 		},
 	}
 
@@ -119,9 +131,10 @@ func main() {
 	//
 
 	syncCommand := &cli.Command{
-		Name: "syncing",
+		Name:  "syncing",
+		Flags: []cli.Flag{beaconPortFlag},
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, syncing)
+			return vanillaAction(ctx, syncing, ctx.String("p"))
 		},
 	}
 
@@ -130,9 +143,10 @@ func main() {
 	//
 
 	identityCommand := &cli.Command{
-		Name: "identity",
+		Name:  "identity",
+		Flags: []cli.Flag{beaconPortFlag},
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, identity)
+			return vanillaAction(ctx, identity, ctx.String("p"))
 		},
 	}
 
@@ -141,9 +155,10 @@ func main() {
 	//
 
 	peerCountCommand := &cli.Command{
-		Name: "peer_count",
+		Name:  "peer_count",
+		Flags: []cli.Flag{beaconPortFlag},
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, peerCount)
+			return vanillaAction(ctx, peerCount, ctx.String("p"))
 		},
 	}
 
@@ -152,9 +167,10 @@ func main() {
 	//
 
 	versionCommand := &cli.Command{
-		Name: "peer_count",
+		Name:  "peer_count",
+		Flags: []cli.Flag{beaconPortFlag},
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, version)
+			return vanillaAction(ctx, version, ctx.String("p"))
 		},
 	}
 
@@ -167,9 +183,10 @@ func main() {
 	//
 
 	genesisCommand := &cli.Command{
-		Name: "genesis",
+		Name:  "genesis",
+		Flags: []cli.Flag{beaconPortFlag},
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, genesis)
+			return vanillaAction(ctx, genesis, ctx.String("p"))
 		},
 	}
 
@@ -187,16 +204,16 @@ func main() {
 		Name:  "v",
 		Usage: "validator ID",
 	}
-	stateFlags = append(stateFlags, stateIDFlag)
+	stateFlags = append(stateFlags, stateIDFlag, beaconPortFlag)
 
 	validatorsCommand := &cli.Command{
 		Name:  "validators",
 		Flags: append(stateFlags, validatorIDFlag),
 		Action: func(ctx *cli.Context) error {
 			if len(ctx.String("v")) > 0 {
-				return vanillaAction(ctx, validatorByID, ctx.String(stateIDFlag.Name), "validators", ctx.String(validatorIDFlag.Name))
+				return vanillaAction(ctx, validatorByID, ctx.String(stateIDFlag.Name), ctx.String("p"), "validators", ctx.String(validatorIDFlag.Name))
 			}
-			return vanillaAction(ctx, validators, ctx.String("s"), "validators")
+			return vanillaAction(ctx, validators, ctx.String("p"), ctx.String("s"), "validators")
 		},
 	}
 
@@ -208,7 +225,7 @@ func main() {
 		Name:  "root",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, root, ctx.String(stateIDFlag.Name), "root")
+			return vanillaAction(ctx, root, ctx.String("p"), ctx.String(stateIDFlag.Name), "root")
 		},
 	}
 
@@ -220,7 +237,7 @@ func main() {
 		Name:  "fork",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, fork, ctx.String(stateIDFlag.Name), "fork")
+			return vanillaAction(ctx, fork, ctx.String("p"), ctx.String(stateIDFlag.Name), "fork")
 		},
 	}
 
@@ -232,7 +249,7 @@ func main() {
 		Name:  "finality_checkpoints",
 		Flags: stateFlags,
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, finalityCheckpoints, ctx.String(stateIDFlag.Name), "finality_checkpoints")
+			return vanillaAction(ctx, finalityCheckpoints, ctx.String("p"), ctx.String(stateIDFlag.Name), "finality_checkpoints")
 		},
 	}
 
@@ -247,13 +264,13 @@ func main() {
 		Required: true,
 	}
 
-	blockFlags = append(blockFlags, blockIDFlag)
+	blockFlags = append(blockFlags, blockIDFlag, beaconPortFlag)
 
 	blockCommand := &cli.Command{
 		Name:  "block",
 		Flags: blockFlags,
 		Action: func(ctx *cli.Context) error {
-			return vanillaAction(ctx, blockByID, ctx.String(blockIDFlag.Name))
+			return vanillaAction(ctx, blockByID, ctx.String("p"), ctx.String(blockIDFlag.Name))
 
 		},
 	}
@@ -281,14 +298,14 @@ func main() {
 		Name:  "filename",
 		Usage: "name for output file",
 	}
-	proposerCountFlags = append(proposerCountFlags, filenameFlag, fromFlag, toFlag)
+	proposerCountFlags = append(proposerCountFlags, filenameFlag, fromFlag, toFlag, beaconPortFlag)
 
 	proposerCountCommand := &cli.Command{
 		Name:        "prop-count",
 		Description: "Retrieves proposed blocks and other info for every validator",
 		Flags:       proposerCountFlags,
 		Action: func(ctx *cli.Context) error {
-			ctr.Count(ctx.String(fromFlag.Name), ctx.String(toFlag.Name), ctx.String(filenameFlag.Name))
+			ctr.Count(ctx.String(fromFlag.Name), ctx.String(toFlag.Name), ctx.String(filenameFlag.Name), ctx.String("p"))
 			return nil
 		},
 	}
@@ -306,7 +323,7 @@ func main() {
 		Name:  "n",
 		Usage: "block to retreive",
 	}
-	blockByNumberFlags = append(blockByNumberFlags, numberFlag)
+	blockByNumberFlags = append(blockByNumberFlags, numberFlag, gethPortFlag)
 
 	bbnCommand := &cli.Command{
 		Name:        "geth-block",
@@ -319,7 +336,7 @@ func main() {
 				"id":      1,
 				"method":  "eth_getBlockByNumber",
 				"params":  []any{hexed, false},
-			})
+			}, ctx.String("p"))
 			indented, err := json.MarshalIndent(rsp, " ", "    ")
 			if err != nil {
 				log.Errorf("can't indent json data! err: %s", err)

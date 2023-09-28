@@ -17,7 +17,8 @@ type Version struct {
 func SpawnVersion() service.Get {
 	return &Version{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/node/version",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/node/version",
 			Response: &VersionJSON{},
 		},
 	}

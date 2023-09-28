@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Counter) getAllProposersNum(state string) int {
-	resp := getValidators.Request([]string{state, "validators"})
+	resp := getValidators.Request([]string{state, "validators"}, c.Port)
 	return len(resp.(*prysm.ValidatorsJSON).Data)
 }
 
@@ -18,13 +18,13 @@ func (c *Counter) getActivitiesContractsEarnings(from string, to string) {
 	// Some indices could be created in requested period, we should reserve space for them
 	balanceBefore := make([]uint64, c.getAllProposersNum(to))
 
-	resp := getValidators.Request([]string{from, "validators"})
+	resp := getValidators.Request([]string{from, "validators"}, c.Port)
 	valNumBefore := c.getAllProposersNum(from)
 	for i := 0; i < valNumBefore; i++ {
 		balanceBefore[i] = mustParseUInt64(resp.(*prysm.ValidatorsJSON).Data[i].Balance)
 	}
 
-	resp = getValidators.Request([]string{to, "validators"})
+	resp = getValidators.Request([]string{to, "validators"}, c.Port)
 	for i := 0; i < len(resp.(*prysm.ValidatorsJSON).Data); i++ {
 		// Contract
 		if resp.(*prysm.ValidatorsJSON).Data[i].Validator.Contract != emptyContract {
@@ -36,8 +36,8 @@ func (c *Counter) getActivitiesContractsEarnings(from string, to string) {
 		// Earnings
 		balanceAfter := mustParseUInt64(resp.(*prysm.ValidatorsJSON).Data[i].Balance)
 		c.Output.Proposers[i].Earned = balanceAfter - balanceBefore[i]
-
 		c.Output.Minted.Add(c.Output.Minted, big.NewInt(int64(c.Output.Proposers[i].Earned)))
+
 		writter.Start()
 		fmt.Fprintf(writter, "\n[Adding other info] Contracts, activities and earnings...%d out of %d validator   ", i, len(c.Output.Proposers))
 		writter.Stop()
@@ -51,7 +51,7 @@ func (c *Counter) getBurned(blockNum uint64) *big.Int {
 		"id":      1,
 		"method":  "eth_getBlockByNumber",
 		"params":  []any{hexed, false},
-	})
+	}, c.Port)
 
 	var (
 		bfString = resp.(*geth.BlockByNumberJSON).Result.BaseFeePerGas

@@ -82,7 +82,8 @@ type BlockByID struct {
 func SpawnBlockByID() service.Get {
 	return &BlockByID{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v2/beacon/blocks",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v2/beacon/blocks",
 			Response: &BlockByIDJSON{},
 		},
 	}

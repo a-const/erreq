@@ -26,8 +26,7 @@ type ProposerJSON struct {
 
 type Counter struct {
 	Output *ProposersJSON
-	Ctr    map[int]int
-	Check  chan bool
+	Port   string
 }
 
 var (

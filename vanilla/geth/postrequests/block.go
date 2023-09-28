@@ -39,7 +39,7 @@ type BlockByNumber struct {
 func SpawnBlockByNumer() service.Post {
 	return &BlockByNumber{
 		PostRequest: service.PostRequest{
-			Url:      "http://127.0.0.1:8545",
+			Url:      "http://127.0.0.1:",
 			Response: &BlockByNumberJSON{},
 		},
 	}

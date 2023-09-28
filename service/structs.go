@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -14,13 +15,27 @@ type ErrorHandler struct {
 	Message string `json:"message"`
 }
 
+func mustWrite(builder *strings.Builder, str string) {
+	_, err := builder.WriteString(str)
+	if err != nil {
+		log.Fatalf("error writing to string builder! err: %s", err)
+	}
+}
+
 type GetRequest struct {
 	Url      string
+	Endpoint string
 	Response any
 }
 
-func (gr *GetRequest) Request(params []string) any {
-	url := strings.Join(append([]string{gr.Url}, params...), "/")
+func (gr *GetRequest) Request(params []string, port string) any {
+	urlBuilder := new(strings.Builder)
+	mustWrite(urlBuilder, gr.Url)
+	mustWrite(urlBuilder, port)
+	mustWrite(urlBuilder, gr.Endpoint)
+	url := urlBuilder.String()
+	url = strings.Join(append([]string{url}, params...), "/")
+	fmt.Printf("Url is: %s", url)
 	response, err := http.Get(url)
 	if err != nil {
 		log.Fatalf("request sending error! err: %s", err)
@@ -49,15 +64,22 @@ func (gr *GetRequest) Request(params []string) any {
 
 type PostRequest struct {
 	Url      string
+	Endpoint string
 	Response any
 }
 
-func (pr *PostRequest) Request(body any) any {
+func (pr *PostRequest) Request(body any, port string) any {
+	urlBuilder := new(strings.Builder)
+	mustWrite(urlBuilder, pr.Url)
+	mustWrite(urlBuilder, port)
+	mustWrite(urlBuilder, pr.Endpoint)
+	url := urlBuilder.String()
+
 	marshaledBody, err := json.Marshal(body)
 	if err != nil {
 		log.Fatalf("body encoding error! err: %s", err)
 	}
-	response, err := http.Post(pr.Url, "application/json", bytes.NewBuffer(marshaledBody))
+	response, err := http.Post(url, "application/json", bytes.NewBuffer(marshaledBody))
 	if err != nil {
 		log.Fatalf("request sending error! err: %s", err)
 	}

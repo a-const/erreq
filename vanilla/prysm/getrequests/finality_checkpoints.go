@@ -30,7 +30,8 @@ type FinalityCheckpoints struct {
 func SpawnFinalityCheckpoints() service.Get {
 	return &FinalityCheckpoints{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/beacon/states",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/beacon/states",
 			Response: &FinalityCheckpointsJSON{},
 		},
 	}

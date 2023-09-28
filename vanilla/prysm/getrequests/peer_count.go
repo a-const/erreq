@@ -20,7 +20,8 @@ type PeerCount struct {
 func SpawnPeerCount() service.Get {
 	return &PeerCount{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/node/peer_count",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/node/peer_count",
 			Response: &PeerCountJSON{},
 		},
 	}
