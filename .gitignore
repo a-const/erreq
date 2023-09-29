@@ -1,0 +1,5 @@
+# Results of prop-counter
+*.json
+
+# Build
+build/
