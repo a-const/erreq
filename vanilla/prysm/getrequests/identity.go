@@ -24,7 +24,8 @@ type Identity struct {
 func SpawnIdentity() service.Get {
 	return &Identity{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/node/identity",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/node/identity",
 			Response: &IdentityJSON{},
 		},
 	}

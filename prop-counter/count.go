@@ -25,6 +25,7 @@ func mustAtoi(val string) int {
 	}
 	return res
 }
+
 func mustParseUInt64(val string) uint64 {
 	res, err := strconv.ParseUint(val, 10, 64)
 	if err != nil {
@@ -55,13 +56,16 @@ func (c *Counter) toFile(filename string) {
 	fmt.Printf("\nDone. Results in file: %s\n", fn)
 }
 
-func (c *Counter) Count(from string, to string, filename string) {
+func (c *Counter) Count(from string, to string, filename string, port string) {
 	var (
 		toIndex   int
 		fromIndex int
 	)
+
+	c.Port = port
+
 	if to == "head" {
-		headBlock := getBlockByID.Request([]string{to})
+		headBlock := getBlockByID.Request([]string{to}, c.Port)
 		toIndex = mustAtoi(headBlock.(*prysm.BlockByIDJSON).Data.Message.Slot)
 	} else {
 		toIndex = mustAtoi(to)
@@ -84,7 +88,7 @@ func (c *Counter) Count(from string, to string, filename string) {
 	}
 
 	for i := fromIndex; i <= toIndex; i++ {
-		block := getBlockByID.Request([]string{fmt.Sprintf("%d", i)})
+		block := getBlockByID.Request([]string{fmt.Sprintf("%d", i)}, c.Port)
 		switch t := block.(type) {
 		case *prysm.BlockByIDJSON:
 			ind := mustAtoi(t.Data.Message.ProposerIndex)

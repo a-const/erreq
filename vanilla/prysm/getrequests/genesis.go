@@ -19,7 +19,8 @@ type Genesis struct {
 func SpawnGenesis() service.Get {
 	return &Genesis{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/beacon/genesis",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/beacon/genesis",
 			Response: &GenesisJSON{},
 		},
 	}

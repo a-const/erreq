@@ -21,7 +21,8 @@ type Fork struct {
 func SpawnFork() service.Get {
 	return &Fork{
 		GetRequest: service.GetRequest{
-			Url:      "http://127.0.0.1:3500/eth/v1/beacon/states",
+			Url:      "http://127.0.0.1:",
+			Endpoint: "/eth/v1/beacon/states",
 			Response: &ForkJSON{},
 		},
 	}
