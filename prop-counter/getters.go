@@ -51,7 +51,7 @@ func (c *Counter) getBurned(blockNum uint64) *big.Int {
 		"id":      1,
 		"method":  "eth_getBlockByNumber",
 		"params":  []any{hexed, false},
-	}, c.Port)
+	}, "8545")
 
 	var (
 		bfString = resp.(*geth.BlockByNumberJSON).Result.BaseFeePerGas
@@ -62,7 +62,7 @@ func (c *Counter) getBurned(blockNum uint64) *big.Int {
 	bf, _ := new(big.Int).SetString(strings.TrimPrefix(bfString, "0x"), 16)
 	gu, _ := new(big.Int).SetString(strings.TrimPrefix(guString, "0x"), 16)
 
-	burned = burned.Mul(bf, gu)
+	burned.Mul(bf, gu)
 	return burned
 
 }

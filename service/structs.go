@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -35,7 +34,7 @@ func (gr *GetRequest) Request(params []string, port string) any {
 	mustWrite(urlBuilder, gr.Endpoint)
 	url := urlBuilder.String()
 	url = strings.Join(append([]string{url}, params...), "/")
-	fmt.Printf("Url is: %s", url)
+
 	response, err := http.Get(url)
 	if err != nil {
 		log.Fatalf("request sending error! err: %s", err)
