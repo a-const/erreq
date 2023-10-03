@@ -1,7 +1,7 @@
 package prysm
 
 import (
-	"brreq/service"
+	"erreq/service"
 )
 
 type BlockByIDJSON struct {

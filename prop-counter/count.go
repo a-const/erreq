@@ -1,9 +1,9 @@
 package propcounter
 
 import (
-	"brreq/service"
-	prysm "brreq/vanilla/prysm/getrequests"
 	"encoding/json"
+	"erreq/service"
+	prysm "erreq/vanilla/prysm/getrequests"
 	"fmt"
 	"math/big"
 	"os"

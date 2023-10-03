@@ -1,7 +1,7 @@
 package propcounter
 
 import (
-	"brreq/vanilla"
+	"erreq/vanilla"
 	"math/big"
 
 	"github.com/gosuri/uilive"

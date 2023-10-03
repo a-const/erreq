@@ -2,7 +2,7 @@
 
 Little tool to make requests to Prysm and Geth gRPC easier
 
-ver 0.3
+ver 0.4
 
 ---
 
@@ -18,33 +18,28 @@ Usage:
 
 ### Commands:
 
-##### Node
+##### Prysm
 
-* peers   
-  *-id*    get peer by id
-* syncing
-* identity
-* peer_count
-* version
+List of available commands (check latest release)  
 
-##### Beacon
+Possible flags:  
 
-* genesis
-* validators   
-  *-s*     state id (required)   
-  *-v*      validator index
-* root   
-  *-s*     state id (required)   
-* fork   
-  *-s*     state id (required)  
-* finality_checkpoints  
-  *-s*     state id (required)  
-* block   
-  *-id*     block id (required)
+* -s state id (numeric or "head")
+* -id ID number of block
+* -r block root
+* -p port (not required, default: 3500)
+
+##### Geth
+
+List of available commands (check latest release)
+
+Possible flags:  
+
+* -n block number
 
 ##### Analyse
 
-* prop-count  
-  *-f*     begin slot number (required)  
-  *-t*       end slot number (or just "head") (required)    
+* prop-count
+  *-f*     begin slot number (required)
+  *-t*       end slot number (or just "head") (required)
   *-filename*     name for output file (default - "proposers.json" to same dir as bin location)

@@ -1,7 +1,7 @@
 package geth
 
 import (
-	"brreq/service"
+	"erreq/service"
 )
 
 type BlockByNumberJSON struct {

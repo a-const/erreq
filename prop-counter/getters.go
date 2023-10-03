@@ -1,8 +1,8 @@
 package propcounter
 
 import (
-	geth "brreq/vanilla/geth/postrequests"
-	prysm "brreq/vanilla/prysm/getrequests"
+	geth "erreq/vanilla/geth/postrequests"
+	prysm "erreq/vanilla/prysm/getrequests"
 	"fmt"
 	"math/big"
 	"strings"
