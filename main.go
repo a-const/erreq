@@ -269,9 +269,9 @@ func main() {
 		Flags: append(stateFlags, validatorIDFlag),
 		Action: func(ctx *cli.Context) error {
 			if len(ctx.String("v")) > 0 {
-				return vanillaAction(ctx, validatorByID, ctx.String(stateIDFlag.Name), ctx.String("p"), "validators", ctx.String(validatorIDFlag.Name))
+				return vanillaAction(ctx, validatorByID, ctx.String("p"), ctx.String(stateIDFlag.Name), "validators", ctx.String(validatorIDFlag.Name))
 			}
-			return vanillaAction(ctx, validators, ctx.String("p"), ctx.String("s"), "validators")
+			return vanillaAction(ctx, validators, ctx.String("p"), ctx.String(stateIDFlag.Name), "validators")
 		},
 	}
 
