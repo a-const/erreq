@@ -91,18 +91,7 @@ func main() {
 	app := cli.App{}
 	app.Name = "erreq"
 	app.Usage = "Little helper for your curl requests to beacon-chain rpc"
-	app.Version = "0.3"
-	app.Before = func(ctx *cli.Context) error {
-		ui.spin = ui.spin.WithWait(&ui.wg)
-		go ui.spin.Start()
-		go ui.gracefulShutdown(ctx.Context)
-		return nil
-	}
-	app.After = func(ctx *cli.Context) error {
-		ui.spin.Stop()
-		ui.wg.Wait()
-		return nil
-	}
+	app.Version = "0.4"
 
 	appFlags := make([]cli.Flag, 0, 1)
 	delayFlag := &cli.Int64Flag{
@@ -110,7 +99,28 @@ func main() {
 		Value: 0,
 		Usage: "delay for refresh",
 	}
-	appFlags = append(appFlags, delayFlag)
+	simpleFlag := &cli.BoolFlag{
+		Name:  "S",
+		Usage: "app will not use spiner and screen refresh, just json output. Works only without -d flag",
+	}
+
+	appFlags = append(appFlags, delayFlag, simpleFlag)
+
+	app.Before = func(ctx *cli.Context) error {
+		if !ctx.Bool(simpleFlag.Name) {
+			ui.spin = ui.spin.WithWait(&ui.wg)
+			go ui.spin.Start()
+			go ui.gracefulShutdown(ctx.Context)
+		}
+		return nil
+	}
+	app.After = func(ctx *cli.Context) error {
+		if !ctx.Bool(simpleFlag.Name) {
+			ui.spin.Stop()
+			ui.wg.Wait()
+		}
+		return nil
+	}
 
 	vanillaAction := func(ctx *cli.Context, obj service.Get, port string, params ...string) error {
 		ui.writter.Start()
@@ -129,6 +139,7 @@ func main() {
 				<-ticker.C
 			}
 		}
+
 		rsp := obj.Request(params, port)
 		indented, err := json.MarshalIndent(rsp, " ", "    ")
 		if err != nil {

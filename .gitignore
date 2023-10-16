@@ -1,5 +1,8 @@
 # Results of prop-counter
 *.json
 
+# .deb packages
+*.deb
+
 # Build
 build/

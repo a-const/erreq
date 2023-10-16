@@ -1,0 +1,5 @@
+Package: erreq
+Architecture: amd64
+Maintainer: Konstantin Astankov <konstantin.astankov@softconstruct.com>
+Version: 0.4
+Description: Little helper for your curl requests to beacon-chain RPC.

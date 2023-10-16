@@ -36,6 +36,7 @@ type ValidatorByIDJSON struct {
 		Validator struct {
 			Pubkey                     string `json:"pubkey"`
 			WithdrawalCredentials      string `json:"withdrawal_credentials"`
+			Contract                   string `json:"contract"`
 			EffectiveBalance           string `json:"effective_balance"`
 			Slashed                    bool   `json:"slashed"`
 			ActivationEligibilityEpoch string `json:"activation_eligibility_epoch"`
