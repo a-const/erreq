@@ -34,7 +34,6 @@ func (gr *GetRequest) Request(params []string, port string) any {
 	mustWrite(urlBuilder, gr.Endpoint)
 	url := urlBuilder.String()
 	url = strings.Join(append([]string{url}, params...), "/")
-
 	response, err := http.Get(url)
 	if err != nil {
 		log.Fatalf("request sending error! err: %s", err)
@@ -73,7 +72,6 @@ func (pr *PostRequest) Request(body any, port string) any {
 	mustWrite(urlBuilder, port)
 	mustWrite(urlBuilder, pr.Endpoint)
 	url := urlBuilder.String()
-
 	marshaledBody, err := json.Marshal(body)
 	if err != nil {
 		log.Fatalf("body encoding error! err: %s", err)

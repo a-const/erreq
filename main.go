@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	propcounter "erreq/prop-counter"
+	analytics "erreq/analytics"
 	"erreq/service"
 	vanilla "erreq/vanilla"
 	"fmt"
@@ -49,7 +49,7 @@ var (
 	attestations         = vanilla.SpawnGetRequest("prysm_attestations")
 
 	// Analyze
-	ctr = propcounter.NewCounter()
+	ctr = analytics.NewCounter()
 
 	// Geth
 	bbn = vanilla.SpawnPostRequest("geth_block_by_number")
@@ -82,7 +82,11 @@ func (ui *UI) gracefulShutdown(ctx context.Context) {
 }
 
 func main() {
-	ctx := context.Background()
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "Mon Jan _2 15:04:05 2006",
+	})
+
 	ui := &UI{
 		writter: uilive.New(),
 		spin:    chin.New(),
@@ -91,7 +95,7 @@ func main() {
 	app := cli.App{}
 	app.Name = "erreq"
 	app.Usage = "Little helper for your curl requests to beacon-chain rpc"
-	app.Version = "0.4"
+	app.Version = "0.5"
 
 	appFlags := make([]cli.Flag, 0, 1)
 	delayFlag := &cli.Int64Flag{
@@ -511,7 +515,7 @@ func main() {
 	// Prop count
 	//
 
-	proposerCountFlags := make([]cli.Flag, 0, 1)
+	analyticsFlags := make([]cli.Flag, 0, 1)
 	fromFlag := &cli.StringFlag{
 		Name:     "f",
 		Usage:    "slot from which app will count",
@@ -526,14 +530,15 @@ func main() {
 		Name:  "filename",
 		Usage: "name for output file",
 	}
-	proposerCountFlags = append(proposerCountFlags, filenameFlag, fromFlag, toFlag, beaconPortFlag)
 
-	proposerCountCommand := &cli.Command{
-		Name:        "prop-count",
+	analyticsFlags = append(analyticsFlags, filenameFlag, fromFlag, toFlag, beaconPortFlag)
+
+	analyticsCommand := &cli.Command{
+		Name:        "analytics",
 		Description: "Retrieves proposed blocks and other info for every validator",
-		Flags:       proposerCountFlags,
+		Flags:       analyticsFlags,
 		Action: func(ctx *cli.Context) error {
-			ctr.Count(ctx.String(fromFlag.Name), ctx.String(toFlag.Name), ctx.String(filenameFlag.Name), ctx.String("p"))
+			ctr.Collect(ctx.String(fromFlag.Name), ctx.String(toFlag.Name), ctx.String(filenameFlag.Name), ctx.String("p"))
 			return nil
 		},
 	}
@@ -548,7 +553,7 @@ func main() {
 
 	blockByNumberFlags := make([]cli.Flag, 0, 1)
 	numberFlag := &cli.Int64Flag{
-		Name:  "n",
+		Name:  "id",
 		Usage: "block to retreive",
 	}
 	blockByNumberFlags = append(blockByNumberFlags, numberFlag, gethPortFlag)
@@ -601,13 +606,12 @@ func main() {
 		blindedBlocksCommand,
 		attestationsCommand,
 		// Analyse
-		proposerCountCommand,
+		analyticsCommand,
 		// Geth
 		bbnCommand,
 	}
 	app.Flags = appFlags
-
-	err := app.RunContext(ctx, os.Args)
+	err := app.RunContext(context.TODO(), os.Args)
 	if err != nil {
 		log.Fatalf("can't start app! err: %s", err)
 	}

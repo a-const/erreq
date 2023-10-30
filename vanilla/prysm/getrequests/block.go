@@ -39,12 +39,9 @@ type BlockByIDJSON struct {
 					} `json:"data"`
 					Signature string `json:"signature"`
 				} `json:"attestations"`
-				Deposits        []any `json:"deposits"`
-				VoluntaryExits  []any `json:"voluntary_exits"`
-				ActivityChanges []struct {
-					ContractAddress string `json:"contract_address"`
-					DeltaActivity   string `json:"delta_activity"`
-				} `json:"activity_changes"`
+				Deposits          []any  `json:"deposits"`
+				VoluntaryExits    []any  `json:"voluntary_exits"`
+				ActivityChanges   []any  `json:"activity_changes"`
 				TransactionsCount string `json:"transactions_count"`
 				BaseFee           string `json:"base_fee"`
 				SyncAggregate     struct {
@@ -52,21 +49,28 @@ type BlockByIDJSON struct {
 					SyncCommitteeSignature string `json:"sync_committee_signature"`
 				} `json:"sync_aggregate"`
 				ExecutionPayload struct {
-					ParentHash    string   `json:"parent_hash"`
-					FeeRecipient  string   `json:"fee_recipient"`
-					StateRoot     string   `json:"state_root"`
-					ReceiptsRoot  string   `json:"receipts_root"`
-					LogsBloom     string   `json:"logs_bloom"`
-					PrevRandao    string   `json:"prev_randao"`
-					BlockNumber   string   `json:"block_number"`
-					GasLimit      string   `json:"gas_limit"`
-					GasUsed       string   `json:"gas_used"`
-					Timestamp     string   `json:"timestamp"`
-					ExtraData     string   `json:"extra_data"`
-					BaseFeePerGas string   `json:"base_fee_per_gas"`
-					BlockHash     string   `json:"block_hash"`
-					Transactions  []string `json:"transactions"`
+					ParentHash    string `json:"parent_hash"`
+					FeeRecipient  string `json:"fee_recipient"`
+					StateRoot     string `json:"state_root"`
+					ReceiptsRoot  string `json:"receipts_root"`
+					LogsBloom     string `json:"logs_bloom"`
+					PrevRandao    string `json:"prev_randao"`
+					BlockNumber   string `json:"block_number"`
+					GasLimit      string `json:"gas_limit"`
+					GasUsed       string `json:"gas_used"`
+					Timestamp     string `json:"timestamp"`
+					ExtraData     string `json:"extra_data"`
+					BaseFeePerGas string `json:"base_fee_per_gas"`
+					BlockHash     string `json:"block_hash"`
+					Transactions  []any  `json:"transactions"`
+					Withdrawals   []struct {
+						Index          string `json:"index"`
+						ValidatorIndex string `json:"validator_index"`
+						Address        string `json:"address"`
+						Amount         string `json:"amount"`
+					} `json:"withdrawals"`
 				} `json:"execution_payload"`
+				BlsToExecutionChanges []any `json:"bls_to_execution_changes"`
 			} `json:"body"`
 		} `json:"message"`
 		Signature string `json:"signature"`

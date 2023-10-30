@@ -1,4 +1,4 @@
-package propcounter
+package analytics
 
 import (
 	"encoding/json"
@@ -14,9 +14,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func NewCounter() *Counter {
-	return &Counter{}
+func NewCounter() *Collector {
+	return &Collector{}
 }
+
+func (c *Collector) Log(msg string) {
+
+}
+
+// func (c *Collector) Logf(msg string, params...){
+
+// }
 
 func mustAtoi(val string) int {
 	res, err := strconv.Atoi(val)
@@ -34,7 +42,7 @@ func mustParseUInt64(val string) uint64 {
 	return res
 }
 
-func (c *Counter) toFile(filename string) {
+func (c *Collector) toFile(filename string) {
 	jsonByte, err := json.MarshalIndent(c.Output, " ", "   ")
 	if err != nil {
 		log.Fatalf("can't marshal results to json! %s", err)
@@ -56,30 +64,26 @@ func (c *Counter) toFile(filename string) {
 	fmt.Printf("\nDone. Results in file: %s\n", fn)
 }
 
-func (c *Counter) Count(from string, to string, filename string, port string) {
-	var (
-		toIndex   int
-		fromIndex int
-	)
-
+func (c *Collector) Collect(from string, to string, filename string, port string) {
 	c.Port = port
 
 	if to == "head" {
 		headBlock := getBlockByID.Request([]string{to}, c.Port)
-		toIndex = mustAtoi(headBlock.(*prysm.BlockByIDJSON).Data.Message.Slot)
+		c.To = mustAtoi(headBlock.(*prysm.BlockByIDJSON).Data.Message.Slot)
 	} else {
-		toIndex = mustAtoi(to)
+		c.To = mustAtoi(to)
 	}
-	fromIndex = mustAtoi(from)
+	c.From = mustAtoi(from)
 
 	c.Output = &ProposersJSON{
-		MaxProposed: -1,
-		From:        fromIndex,
-		To:          toIndex,
-		Proposers:   make([]*ProposerJSON, c.getAllProposersNum(to)),
-		Burned:      big.NewInt(0),
-		Minted:      big.NewInt(0),
+		MaxProposed:  -1,
+		From:         c.From,
+		To:           c.To,
+		ProposersNum: c.getAllProposersNum(to),
+		Burned:       big.NewInt(0),
+		Minted:       big.NewInt(0),
 	}
+	c.Output.Proposers = make([]*ProposerJSON, c.Output.ProposersNum)
 
 	for i := 0; i < len(c.Output.Proposers); i++ {
 		c.Output.Proposers[i] = &ProposerJSON{
@@ -87,7 +91,7 @@ func (c *Counter) Count(from string, to string, filename string, port string) {
 		}
 	}
 
-	for i := fromIndex; i <= toIndex; i++ {
+	for i := c.From; i <= c.To; i++ {
 		block := getBlockByID.Request([]string{fmt.Sprintf("%d", i)}, c.Port)
 		switch t := block.(type) {
 		case *prysm.BlockByIDJSON:
@@ -99,7 +103,7 @@ func (c *Counter) Count(from string, to string, filename string, port string) {
 			}
 			c.Output.Burned.Add(c.Output.Burned, c.getBurned(mustParseUInt64(t.Data.Message.Body.ExecutionPayload.BlockNumber)))
 			writter.Start()
-			fmt.Fprintf(writter, "\n[Counting blocks] From: %d. To: %d. Current block: %d.  Proposer index %d.   ", fromIndex, toIndex, i, ind)
+			fmt.Fprintf(writter, "\n[Counting blocks] From: %d. To: %d. Current block: %d.  Proposer index %d.   \n", c.From, c.To, i, ind)
 			writter.Stop()
 		case *service.ErrorHandler:
 			continue
@@ -108,7 +112,7 @@ func (c *Counter) Count(from string, to string, filename string, port string) {
 
 	c.Output.Burned.Div(c.Output.Burned, big.NewInt(1e9))
 
-	c.getActivitiesContractsEarnings(from, to)
+	c.ActivitiesContractsEarnings(from, to)
 
 	slices.SortStableFunc(c.Output.Proposers, func(a, b *ProposerJSON) int {
 		if a.Counter > b.Counter {
@@ -120,4 +124,5 @@ func (c *Counter) Count(from string, to string, filename string, port string) {
 		return 0
 	})
 	c.toFile(filename)
+
 }

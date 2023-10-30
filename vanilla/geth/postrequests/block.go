@@ -29,6 +29,13 @@ type BlockByNumberJSON struct {
 		Transactions     []any  `json:"transactions"`
 		TransactionsRoot string `json:"transactionsRoot"`
 		Uncles           []any  `json:"uncles"`
+		Withdrawals      []struct {
+			Index          string `json:"index"`
+			ValidatorIndex string `json:"validatorIndex"`
+			Address        string `json:"address"`
+			Amount         string `json:"amount"`
+		} `json:"withdrawals"`
+		WithdrawalsRoot string `json:"withdrawalsRoot"`
 	} `json:"result"`
 }
 

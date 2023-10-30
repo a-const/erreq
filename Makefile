@@ -4,9 +4,9 @@ DESTDIR = ./build/pkg
 
 .PHONY: clean
 
-all: build package clean
+all: go-build package clean
 
-build:
+go-build:
 	go build -o ./build/erreq
 
 package:
