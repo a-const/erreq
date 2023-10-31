@@ -97,7 +97,7 @@ func (c *Collector) ActivitiesContractsEarnings_Bellatrix(from string, to string
 		// Earnings
 		balanceAfter := mustParseUInt64(resp.(*prysm.ValidatorsJSON).Data[i].Balance)
 		c.Output.Proposers[i].Earned = balanceAfter - balanceBefore[i]
-		c.Output.Minted.Add(c.Output.Minted, big.NewInt(int64(c.Output.Proposers[i].Earned)))
+		c.Output.Minted.Add(c.Output.Minted, new(big.Int).SetUint64(c.Output.Proposers[i].Earned))
 
 		writter.Start()
 		fmt.Fprintf(writter, "\n[Bellatrix][Adding other info] Contracts, activities and earnings...%d out of %d validator   \n", i, len(c.Output.Proposers))
@@ -130,12 +130,6 @@ func (c *Collector) firstWitdrawalsContractsActivity(from string, to string) []*
 		fmt.Fprintf(writter, "\n[Capella][Searching for withdrawal credentials] Checked %d out of %d validators...   \n", i, len(earnings))
 		writter.Stop()
 
-		if strings.Compare("0x01", v.Validator.WithdrawalCredentials[0:4]) == 0 {
-			earnings[i].IsCredentialsSet = true
-			continue
-		}
-		firstWdFill++
-
 		// Contract
 		if v.Validator.Contract != emptyContract {
 			c.Output.Proposers[i].Contract = v.Validator.Contract
@@ -144,13 +138,19 @@ func (c *Collector) firstWitdrawalsContractsActivity(from string, to string) []*
 		actv := mustParseUInt64(v.Validator.EffectiveActivity)
 		c.Output.Proposers[i].Activity = actv
 
+		if v.Validator.WithdrawalCredentials[0:5] == "0x010" {
+			earnings[i].IsCredentialsSet = true
+			continue
+		}
+		firstWdFill++
+
 	}
 
 	writter.Start()
 	fmt.Fprint(writter, "\n[Capella][Searching for witdrawal credentials] Done!   \n")
 	writter.Stop()
 
-	for bl := forkBlock; bl < toBlock && firstWdFill < valNum; bl++ {
+	for bl := forkBlock; bl < toBlock && firstWdFill < valNum-1; bl++ {
 		writter.Start()
 		fmt.Fprintf(writter, "\n[Capella][Searching for first withdrawals] %d out of %d validators...   \n", firstWdFill, valNum)
 		writter.Stop()
@@ -238,27 +238,28 @@ func (c *Collector) ActivitiesContractsEarnings_Capella(from string, to string) 
 		log.Fatal("error receiving validators info")
 	}
 
-	for ind := range c.Output.Proposers {
+	for ind := 0; ind < c.Output.ProposersNum; ind++ {
 		writter.Start()
 		fmt.Fprintf(writter, "\n[Capella][Filling output] %d out of %d validators...   \n", ind, len(c.Output.Proposers))
 		writter.Stop()
 		if earnings[ind].IsCredentialsSet {
-			for e_ind := 1; e_ind < len(earnings[ind].Withdrawals); e_ind++ {
-				earned, err := strconv.ParseUint(strings.TrimPrefix(earnings[ind].Withdrawals[e_ind].Amount, "0x"), 16, 64)
+			for eInd := 1; eInd < len(earnings[ind].Withdrawals); eInd++ {
+				earned, err := strconv.ParseUint(strings.TrimPrefix(earnings[ind].Withdrawals[eInd].Amount, "0x"), 16, 64)
 				if err != nil {
 					log.Fatal("can't convert hex string to int")
 				}
 				c.Output.Proposers[ind].Earned += earned
 			}
 
-			c.Output.Proposers[ind].Earned += mustParseUInt64(balancesTo[ind].Balance) - uint64(8192*1e9)
-			c.Output.Minted.Add(c.Output.Minted, big.NewInt(int64(c.Output.Proposers[ind].Earned)))
+			c.Output.Proposers[ind].Earned += mustParseUInt64(balancesTo[ind].Balance) % uint64(8192*1e9)
+			c.Output.Minted.Add(c.Output.Minted, new(big.Int).SetUint64(c.Output.Proposers[ind].Earned))
+			log.Infof("Idx: %d, Contract: %s, Set: %+v", ind, balancesTo[ind].Validator.Contract, earnings[ind].IsCredentialsSet)
 			continue
 		}
 		after := mustParseUInt64(balancesTo[ind].Balance)
 		before := mustParseUInt64(balancesFrom[ind].Balance)
 		c.Output.Proposers[ind].Earned += after - before
-		c.Output.Minted.Add(c.Output.Minted, big.NewInt(int64(c.Output.Proposers[ind].Earned)))
+		c.Output.Minted.Add(c.Output.Minted, new(big.Int).SetUint64(c.Output.Proposers[ind].Earned))
 	}
 
 }

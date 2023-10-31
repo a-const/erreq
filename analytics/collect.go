@@ -85,7 +85,7 @@ func (c *Collector) Collect(from string, to string, filename string, port string
 	}
 	c.Output.Proposers = make([]*ProposerJSON, c.Output.ProposersNum)
 
-	for i := 0; i < len(c.Output.Proposers); i++ {
+	for i := 0; i < c.Output.ProposersNum; i++ {
 		c.Output.Proposers[i] = &ProposerJSON{
 			Index: i,
 		}
